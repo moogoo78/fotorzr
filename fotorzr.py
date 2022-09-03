@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime, date
 import time
 import shutil
+import sys
 
 
 class Fotorzr(object):
@@ -126,6 +127,7 @@ def main(args):
 
     foto.exec_copy(args.is_dry_run)
 
+
 parser = argparse.ArgumentParser(description='Copy foto from camera to disk')
 parser.add_argument('-c', '--config', dest='config', default='config.ini', help='config path')
 parser.add_argument('-d', '--dirs', dest='dirs', nargs=2, help='set source target dirs')
@@ -137,7 +139,9 @@ parser.add_argument('-b', '--begin-date', dest='begin_date', help='set begin fro
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    main(args)
-#    print (args)
-
+    if len(sys.argv) == 1:
+        parser.print_help()
+    else:
+        main(args)
+        #print(args)
 
