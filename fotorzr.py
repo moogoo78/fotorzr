@@ -131,7 +131,7 @@ def main(args):
 parser = argparse.ArgumentParser(description='Copy foto from camera to disk')
 parser.add_argument('-c', '--config', dest='config', default='config.ini', help='config path')
 parser.add_argument('-d', '--dirs', dest='dirs', nargs=2, help='set source target dirs')
-parser.add_argument('-s', '--save', action='store_true')
+parser.add_argument('-s', '--save', action='store_true', help='save config')
 parser.add_argument('-t', '--dry-run', dest='is_dry_run', action='store_true', help='dry run')
 parser.add_argument('-f', '--date-format', dest='date_format', default='%y%m%d', help='set target folder format')
 parser.add_argument('-b', '--begin-date', dest='begin_date', help='set begin from date')
@@ -139,9 +139,7 @@ parser.add_argument('-b', '--begin-date', dest='begin_date', help='set begin fro
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        parser.print_help()
-    else:
-        main(args)
-        #print(args)
-
+    #if len(sys.argv) == 1:
+    #    parser.print_help()
+    #else:
+    main(args)
