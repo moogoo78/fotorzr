@@ -36,7 +36,7 @@ class Fotorzr(object):
 
         # set date range
         begin_date = None
-        end_date = None
+        end_date = None # TODO
         if b:= args.begin_date:
             begin_date = b
         elif b:= self.config.get('Changes', 'last_date', fallback=''):
@@ -44,9 +44,9 @@ class Fotorzr(object):
 
         if begin_date:
             begin_date = date(
-                year=2000 + int(b[0:2]),
-                month=int(b[2:4]),
-                day=int(b[4:6]))
+                year=2000 + int(begin_date[0:2]),
+                month=int(begin_date[2:4]),
+                day=int(begin_date[4:6]))
         self.begin_date = begin_date
         self._print(f'set begin_date => {begin_date}')
 
@@ -79,39 +79,53 @@ class Fotorzr(object):
             self._print('error: source or target path not ok')
             return False
 
+        target_dirs = {}
         new_dir = []
-        last_dir = ''
+        last_date = self.begin_date
         for foto_file in self.source_path.iterdir():
-            file_datetime = datetime.fromtimestamp(foto_file.stat().st_mtime)#.strftime(args.date_format)
+            file_datetime = datetime.fromtimestamp(foto_file.stat().st_mtime) #.strftime(args.date_format)
             file_date = file_datetime.date()
-            last_dir = file_date.strftime(args.date_format)
+            print(file_date, last_date)
+            if file_date > last_date:
+                last_date = file_date
+            date_str = file_date.strftime(args.date_format)
+            if date_str not in target_dirs:
+                target_name = date_str
+                if args.interactive is True:
+                    postfix_name = input(f'input target dir name: {date_str}_')
+                    target_name = f'{date_str}_{postfix_name}'
 
-            if file_date >= self.begin_date:
-                target_date_path = self.target_path.joinpath(last_dir)
-                self._print('copy file: {} ({}) => {}'.format(
-                    foto_file.resolve(),
-                    datetime.fromtimestamp(foto_file.stat().st_mtime),
-                    target_date_path))
+                target_path = self.target_path.joinpath(target_name)
+                target_dirs[date_str] = {
+                    'count': 1,
+                    'name': target_name,
+                }
 
-                if last_dir not in new_dir:
-                    new_dir.append(last_dir)
+                if target_path.exists() is False:
+                    self._print(f'create dir: {target_path}')
+                    if dry_run is False:
+                        target_path.mkdir()
+            else:
+                target_dirs[date_str]['count'] += 1
 
-                if dry_run is False and target_date_path.exists() is False:
-                    self._print(f'create dir: {target_date_path}')
-                    target_date_path.mkdir()
+            # copy file
+            self._print('copy file: {} ({}) => {}'.format(
+                foto_file.resolve(),
+                datetime.fromtimestamp(foto_file.stat().st_mtime),
+                target_path))
 
-                end_date = file_date
+            if dry_run is False:
+                shutil.copy2(foto_file, target_path)
 
-                if dry_run is False:
-                    shutil.copy2(foto_file, target_date_path)
-                else:
-                    pass
-
-        self._print('create dirs: {}'.format(', '.join(new_dir)))
-
-        self.config.set('Changes', 'last_date', last_dir)
+        # write last date
+        last_date_str = str(last_date)
+        self.config.set('Changes', 'last_date', last_date_str)
         self.write_config()
-        self._print(f'update last_date: {last_dir}')
+        self._print(f'update last_date: {last_date_str}')
+
+        # show stats
+        for k,v in target_dirs.items():
+            self._print(f"create dir: {v['name']} (number of files: {v['count']})")
 
     def write_config(self):
         with open(self.config_path, 'w') as configfile:
@@ -135,6 +149,7 @@ parser.add_argument('-s', '--save', action='store_true', help='save config')
 parser.add_argument('-t', '--dry-run', dest='is_dry_run', action='store_true', help='dry run')
 parser.add_argument('-f', '--date-format', dest='date_format', default='%y%m%d', help='set target folder format')
 parser.add_argument('-b', '--begin-date', dest='begin_date', help='set begin from date')
+parser.add_argument('-i', '--interactive', action='store_true', help='input dir name')
 
 args = parser.parse_args()
 
