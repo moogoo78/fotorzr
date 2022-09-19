@@ -43,10 +43,7 @@ class Fotorzr(object):
             begin_date = b
 
         if begin_date:
-            begin_date = date(
-                year=2000 + int(begin_date[0:2]),
-                month=int(begin_date[2:4]),
-                day=int(begin_date[4:6]))
+            begin_date = datetime.strptime(begin_date, '%Y-%m-%d').date()
         self.begin_date = begin_date
         self._print(f'set begin_date => {begin_date}')
 
