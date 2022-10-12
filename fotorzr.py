@@ -79,43 +79,43 @@ class Fotorzr(object):
         target_dirs = {}
         new_dir = []
         last_date = self.begin_date
+        last_date_tmp = None
         for foto_file in self.source_path.iterdir():
             file_datetime = datetime.fromtimestamp(foto_file.stat().st_mtime) #.strftime(args.date_format)
             file_date = file_datetime.date()
-            print(file_date, last_date)
+            # print(file_date, last_date)
             if file_date > last_date:
-                last_date = file_date
-            date_str = file_date.strftime(args.date_format)
-            if date_str not in target_dirs:
-                target_name = date_str
-                if args.interactive is True:
-                    postfix_name = input(f'input target dir name: {date_str}_')
-                    target_name = f'{date_str}_{postfix_name}'
+                last_date_tmp = file_date
+                date_str = file_date.strftime(args.date_format)
+                if date_str not in target_dirs:
+                    target_name = date_str
+                    if args.interactive is True:
+                        postfix_name = input(f'input target dir name: {date_str}_')
+                        target_name = f'{date_str}_{postfix_name}'
 
-                target_path = self.target_path.joinpath(target_name)
-                target_dirs[date_str] = {
-                    'count': 1,
-                    'name': target_name,
-                }
+                    target_path = self.target_path.joinpath(target_name)
+                    target_dirs[date_str] = {
+                        'count': 1,
+                        'name': target_name,
+                    }
 
-                if target_path.exists() is False:
-                    self._print(f'create dir: {target_path}')
-                    if dry_run is False:
-                        target_path.mkdir()
-            else:
-                target_dirs[date_str]['count'] += 1
+                    if target_path.exists() is False:
+                        self._print(f'create dir: {target_path}')
+                        if dry_run is False:
+                            target_path.mkdir()
+                else:
+                    target_dirs[date_str]['count'] += 1
 
-            # copy file
-            self._print('copy file: {} ({}) => {}'.format(
-                foto_file.resolve(),
-                datetime.fromtimestamp(foto_file.stat().st_mtime),
-                target_path))
-
-            if dry_run is False:
-                shutil.copy2(foto_file, target_path)
+                # copy file
+                self._print('copy file: {} ({}) => {}'.format(
+                    foto_file.resolve(),
+                    datetime.fromtimestamp(foto_file.stat().st_mtime),
+                    target_path))
+                if dry_run is False:
+                    shutil.copy2(foto_file, target_path)
 
         # write last date
-        last_date_str = str(last_date)
+        last_date_str = str(last_date_tmp)
         self.config.set('Changes', 'last_date', last_date_str)
         self.write_config()
         self._print(f'update last_date: {last_date_str}')
