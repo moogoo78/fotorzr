@@ -42,6 +42,9 @@ class Fotorzr(object):
         elif b:= self.config.get('Changes', 'last_date', fallback=''):
             begin_date = b
 
+        self.last_timestamp = self.config.get('Changes', 'last_timestamp', fallback=0)
+        self.last_timestamp = int(self.last_timestamp)
+
         if begin_date:
             begin_date = datetime.strptime(begin_date, '%Y-%m-%d').date()
         self.begin_date = begin_date
@@ -79,12 +82,18 @@ class Fotorzr(object):
         target_dirs = {}
         new_dir = []
         last_date = self.begin_date
-        last_date_tmp = None
+        last_date_tmp = last_date
+        last_timestamp_tmp = self.last_timestamp
         for foto_file in self.source_path.iterdir():
             file_datetime = datetime.fromtimestamp(foto_file.stat().st_mtime) #.strftime(args.date_format)
             file_date = file_datetime.date()
+            ts = int(file_datetime.timestamp())
+            if ts > self.last_timestamp:
+                self.last_timestamp = ts
+
             # print(file_date, last_date)
-            if file_date > last_date:
+            #if file_date >= last_date:
+            if ts > last_timestamp_tmp:
                 last_date_tmp = file_date
                 date_str = file_date.strftime(args.date_format)
                 if date_str not in target_dirs:
@@ -117,6 +126,7 @@ class Fotorzr(object):
         # write last date
         last_date_str = str(last_date_tmp)
         self.config.set('Changes', 'last_date', last_date_str)
+        self.config.set('Changes', 'last_timestamp', str(self.last_timestamp))
         self.write_config()
         self._print(f'update last_date: {last_date_str}')
 
